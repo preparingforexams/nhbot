@@ -1,0 +1,17 @@
+namespace: telegram-bots
+
+deployment:
+  name: nhbot
+  image: ghcr.io/preparingforexams/nhbot:__TAG__
+  imagePullPolicy: Always
+  revisionHistoryLimit: 1
+  replicas: 1
+  labels:
+    app: nhbot
+  requests:
+    cpu: 50m
+    memory: 50Mi
+
+secret:
+  name: nhbot-telegram-token
+  password: __TELEGRAM_TOKEN__
