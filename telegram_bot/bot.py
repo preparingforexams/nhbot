@@ -122,6 +122,9 @@ class Bot:
 
     @Command()
     def handle_message(self, update: Update, context: CallbackContext) -> None:
+        if update.edited_message:
+            return
+
         chat: Chat = context.chat_data["chat"]
 
         self.logger.info("Handle message: {}".format(update.effective_message.text))
