@@ -117,13 +117,24 @@ class Bot:
     def delete_message(self, chat_id: str, message_id: str, *args, **kwargs):
         return self.updater.bot.delete_message(chat_id=chat_id, message_id=message_id, *args, **kwargs)
 
-    def send_nh_sticker(self, chat: Chat, message_id: str, sticker_id: str = "CAACAgIAAxkBAAIMHmAPFkBuPZpefXalATwEaInrpyEKAAIPAAPgLXoN0KhdkOTTb1EeBA") -> None:
+    def send_nh_sticker(self, chat: Chat, message_id: str,
+                        sticker_id: str = "CAACAgIAAxkBAAIMHmAPFkBuPZpefXalATwEaInrpyEKAAIPAAPgLXoN0KhdkOTTb1EeBA") -> None:
         self.updater.bot.send_sticker(chat_id=chat.id, sticker=sticker_id, reply_to_message_id=message_id)
+
+    @staticmethod
+    def is_spoiler(update: Update) -> bool:
+        regex = r".*?||[^\[]nh[^\[]||.*"
+
+        has_spoiler_entity = any(entity.type == "spoiler" for entity in update.effective_message.entities)
+        has_nh_spoiler_in_text_markdown_v2 = re.match(r"", (update.effective_message.text_markdown_v2 or ""))
+        has_nh_spoiler_in_caption_markdown_v2 = re.match(r"", (update.effective_message.caption_markdown_v2 or ""))
+
+        return has_spoiler_entity and (has_nh_spoiler_in_text_markdown_v2 or has_nh_spoiler_in_caption_markdown_v2)
 
     @Command()
     def handle_message(self, update: Update, context: CallbackContext) -> None:
         if update.edited_message:
-            return
+            return None
 
         chat: Chat = context.chat_data["chat"]
 
@@ -132,13 +143,20 @@ class Bot:
             message = update.effective_message
             text = message.text if message.text else message.caption
             if text and re.match(r".*\bnh\b.*", text, re.IGNORECASE | re.MULTILINE) or "nh" == text:
-                return self.send_nh_sticker(chat=chat, message_id=update.effective_message.message_id)
+                if self.is_spoiler(update):
+                    self.send_message(chat_id=chat.id, text="||nh||", parse_mode=ParseMode.MARKDOWN_V2)
+                else:
+                    self.send_nh_sticker(chat=chat, message_id=update.effective_message.message_id)
+        return None
 
     @Command()
     def nh(self, update: Update, context: CallbackContext) -> None:
         chat: Chat = context.chat_data["chat"]
 
-        return self.send_nh_sticker(chat=chat, message_id=update.effective_message.message_id)
+        if self.is_spoiler(update):
+            self.send_message(chat_id=chat.id, text="||nh||", parse_mode=ParseMode.MARKDOWN_V2)
+        else:
+            self.send_nh_sticker(chat=chat, message_id=update.effective_message.message_id)
 
     @Command()
     def handle_left_chat_member(self, update: Update, context: CallbackContext) -> None:
@@ -227,7 +245,7 @@ class Bot:
         if not context.args:
             message = "Please provide a user and an optional timeout (`/mute <user> [<timeout in minutes>] [<reason>]`)"
             self.logger.warning("No arguments have been provided, don't execute `mute`.")
-            return self.send_message(chat_id=update.message.chat_id, text=message, parse_mode=ParseMode.MARKDOWN)
+            return self.send_message(chat_id=str(update.message.chat_id), text=message, parse_mode=ParseMode.MARKDOWN)
 
         username = context.args[0]
         minutes = 15
