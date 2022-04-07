@@ -123,13 +123,7 @@ class Bot:
 
     @staticmethod
     def is_spoiler(update: Update) -> bool:
-        regex = r".*?||[^\[]nh[^\[]||.*"
-
-        has_spoiler_entity = any(entity.type == "spoiler" for entity in update.effective_message.entities)
-        has_nh_spoiler_in_text_markdown_v2 = re.match(r"", (update.effective_message.text_markdown_v2 or ""))
-        has_nh_spoiler_in_caption_markdown_v2 = re.match(r"", (update.effective_message.caption_markdown_v2 or ""))
-
-        return has_spoiler_entity and (has_nh_spoiler_in_text_markdown_v2 or has_nh_spoiler_in_caption_markdown_v2)
+        return any(entity.type == "spoiler" for entity in update.effective_message.entities)
 
     @Command()
     def handle_message(self, update: Update, context: CallbackContext) -> None:
