@@ -116,9 +116,9 @@ class Bot:
     def delete_message(self, chat_id: str, message_id: str, *args, **kwargs):
         return self.updater.bot.delete_message(chat_id=chat_id, message_id=message_id, *args, **kwargs)
 
-    def send_nh_sticker(self, chat: Chat, message_id: str,
+    def send_nh_sticker(self, chat_id: int, message_id: str,
                         sticker_id: str = "CAACAgIAAxkBAAIMHmAPFkBuPZpefXalATwEaInrpyEKAAIPAAPgLXoN0KhdkOTTb1EeBA") -> None:
-        self.updater.bot.send_sticker(chat_id=chat.id, sticker=sticker_id, reply_to_message_id=message_id)
+        self.updater.bot.send_sticker(chat_id=chat_id, sticker=sticker_id, reply_to_message_id=message_id)
 
     @staticmethod
     def is_spoiler(update: Update) -> bool:
@@ -147,9 +147,9 @@ class Bot:
         chat: Chat = context.chat_data["chat"]
 
         if self.is_spoiler(update):
-            self.send_message(chat_id=chat.id, text="||nh||", parse_mode=ParseMode.MARKDOWN_V2)
+            self.send_message(chat_id=str(update.effective_message.chat_id), text="||nh||", parse_mode=ParseMode.MARKDOWN_V2)
         else:
-            self.send_nh_sticker(chat=chat, message_id=update.effective_message.message_id)
+            self.send_nh_sticker(chat_id=update.effective_message.chat_id, message_id=update.effective_message.message_id)
 
     @Command()
     def handle_left_chat_member(self, update: Update, context: CallbackContext) -> None:

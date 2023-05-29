@@ -1,6 +1,5 @@
 import os
 import sys
-import threading
 
 from telegram.ext import CommandHandler, Updater, MessageHandler, Filters
 
