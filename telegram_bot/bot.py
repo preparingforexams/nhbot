@@ -137,9 +137,9 @@ class Bot:
             text = message.text if message.text else message.caption
             if text and re.match(r".*\bnh\b.*", text, re.IGNORECASE | re.MULTILINE) or "nh" == text:
                 if self.is_spoiler(update):
-                    self.send_message(chat_id=chat.id, text="||nh||", parse_mode=ParseMode.MARKDOWN_V2)
+                    self.send_message(chat_id=str(update.effective_message.chat_id), text="||nh||", parse_mode=ParseMode.MARKDOWN_V2)
                 else:
-                    self.send_nh_sticker(chat=chat, message_id=update.effective_message.message_id)
+                    self.send_nh_sticker(chat_id=update.effective_message.chat_id, message_id=update.effective_message.message_id)
         return None
 
     @Command()
