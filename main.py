@@ -53,21 +53,6 @@ def start(bot_token: str, state_file: str):
             except json.decoder.JSONDecodeError as e:
                 logger.warning(f"Unable to load previous state: {e}")
 
-    try:
-        if sys.argv[1] == "--testrun":
-            logger.info("Scheduling exit in 5 seconds")
-
-            def _exit():
-                logger.info("Exiting")
-                updater.stop()
-                updater.is_idle = False
-
-            timer = threading.Timer(5, _exit)
-            timer.setDaemon(True)
-            timer.start()
-    except IndexError:
-        pass
-
     logger.info("Running")
     updater.start_polling()
     updater.idle()
