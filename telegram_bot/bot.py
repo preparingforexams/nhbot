@@ -144,8 +144,6 @@ class Bot:
 
     @Command()
     def nh(self, update: Update, context: CallbackContext) -> None:
-        chat: Chat = context.chat_data["chat"]
-
         if self.is_spoiler(update):
             self.send_message(chat_id=str(update.effective_message.chat_id), text="||nh||", parse_mode=ParseMode.MARKDOWN_V2)
         else:
