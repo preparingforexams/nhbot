@@ -123,7 +123,7 @@ class Bot:
 
     @staticmethod
     def is_nh_text(text: str) -> bool:
-        return re.match(r".*\bnh\b.*", text, re.IGNORECASE | re.MULTILINE) or "nh" == text
+        return "nh" == text or re.match(r".*\bnh\b.*", text, re.IGNORECASE | re.MULTILINE)
 
     @staticmethod
     def is_nh_spoiler(update: Update) -> bool:
