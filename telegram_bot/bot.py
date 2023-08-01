@@ -127,7 +127,9 @@ class Bot:
 
     @staticmethod
     def is_nh_spoiler(update: Update) -> bool:
-        if any(entity.type == "spoiler" for entity in update.effective_message.entities):
+        entities = update.effective_message.entities or update.effective_message.caption_entities
+
+        if any(entity.type == "spoiler" for entity in entities):
             html = update.effective_message.text_html or update.effective_message.caption_html
             soup = BeautifulSoup(html, "html.parser")
             spoilers = soup.find_all("span", {"class": "tg-spoiler"})
