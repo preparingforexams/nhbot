@@ -7,6 +7,7 @@ from itertools import zip_longest
 from threading import Timer
 from typing import Any, List, Optional, Dict, Iterable, Tuple
 
+from bs4 import BeautifulSoup
 from telegram import ParseMode, TelegramError, Update, Message, ChatPermissions
 from telegram.error import BadRequest
 from telegram.ext import CallbackContext, Updater
@@ -121,8 +122,20 @@ class Bot:
         self.updater.bot.send_sticker(chat_id=chat_id, sticker=sticker_id, reply_to_message_id=message_id)
 
     @staticmethod
-    def is_spoiler(update: Update) -> bool:
-        return any(entity.type == "spoiler" for entity in update.effective_message.entities)
+    def is_nh_text(text: str) -> bool:
+        return re.match(r".*\bnh\b.*", text, re.IGNORECASE | re.MULTILINE) or "nh" == text
+
+    @staticmethod
+    def is_nh_spoiler(update: Update) -> bool:
+        if any(entity.type == "spoiler" for entity in update.effective_message.entities):
+            html = update.effective_message.text_html or update.effective_message.caption_html
+            soup = BeautifulSoup(html, "html.parser")
+            spoilers = soup.find_all("span", {"class": "tg-spoiler"})
+            for spoiler in spoilers:
+                if Bot.is_nh_text(" ".join(spoiler.strings)):
+                    return True
+
+        return False
 
     @Command()
     def handle_message(self, update: Update, context: CallbackContext) -> None:
@@ -135,19 +148,23 @@ class Bot:
         if update.effective_message:
             message = update.effective_message
             text = message.text if message.text else message.caption
-            if text and re.match(r".*\bnh\b.*", text, re.IGNORECASE | re.MULTILINE) or "nh" == text:
-                if self.is_spoiler(update):
-                    self.send_message(chat_id=str(update.effective_message.chat_id), text="||nh||", parse_mode=ParseMode.MARKDOWN_V2)
+            if text and Bot.is_nh_text(text):
+                if self.is_nh_spoiler(update):
+                    self.send_message(chat_id=str(update.effective_message.chat_id), text="||nh||",
+                                      parse_mode=ParseMode.MARKDOWN_V2)
                 else:
-                    self.send_nh_sticker(chat_id=update.effective_message.chat_id, message_id=update.effective_message.message_id)
+                    self.send_nh_sticker(chat_id=update.effective_message.chat_id,
+                                         message_id=update.effective_message.message_id)
         return None
 
     @Command()
     def nh(self, update: Update, context: CallbackContext) -> None:
-        if self.is_spoiler(update):
-            self.send_message(chat_id=str(update.effective_message.chat_id), text="||nh||", parse_mode=ParseMode.MARKDOWN_V2)
+        if self.is_nh_spoiler(update):
+            self.send_message(chat_id=str(update.effective_message.chat_id), text="||nh||",
+                              parse_mode=ParseMode.MARKDOWN_V2)
         else:
-            self.send_nh_sticker(chat_id=update.effective_message.chat_id, message_id=update.effective_message.message_id)
+            self.send_nh_sticker(chat_id=update.effective_message.chat_id,
+                                 message_id=update.effective_message.message_id)
 
     @Command()
     def handle_left_chat_member(self, update: Update, context: CallbackContext) -> None:
