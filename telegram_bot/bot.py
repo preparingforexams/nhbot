@@ -59,6 +59,20 @@ def convert_cups(match: re.Match) -> str:
     return "\n".join(cups)
 
 
+def convert_tablespoon(match: re.Match) -> str:
+    return "\n".join([
+        convert_number(match, lambda n: n * 15, "gram"),
+        convert_number(match, lambda n: n * 14.7867648, "ml"),
+    ])
+
+
+def convert_teaspoon(match: re.Match) -> str:
+    return "\n".join([
+        convert_number(match, lambda n: n * 4.18, "gram"),
+        convert_number(match, lambda n: n * 5, "ml"),
+    ])
+
+
 def convert_ounces(match: re.Match) -> str:
     fluid = convert_number(match, lambda n: n * 29.57353, "ml")
     mass = convert_number(match, lambda n: n * 28.34952, "gram")
@@ -67,7 +81,6 @@ def convert_ounces(match: re.Match) -> str:
 
 
 regex_match_number_with_prefix = r"(?P<number>[-+]?\d+(:?(:?,|\.)\d+)?)"
-
 units: dict[str, dict[str, Union[re.Pattern, Callable[[re.Match], str]]]] = {
     "fahrenheit": {
         "regex": re.compile(
@@ -100,8 +113,17 @@ units: dict[str, dict[str, Union[re.Pattern, Callable[[re.Match], str]]]] = {
     "cups": {
         "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>cup|endgegner)"),
         "process": lambda m: convert_cups(m),
-    }
+    },
+    "tablespoon": {
+        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>tablespoon|tbsp)"),
+        "process": convert_tablespoon,
+    },
+    "teaspoon": {
+        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>teaspoon|tsp)"),
+        "process": convert_teaspoon,
+    },
 }
+
 
 
 def match_unit(unit: dict, args: str) -> re.Match | None:
