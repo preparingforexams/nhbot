@@ -28,35 +28,57 @@ def is_nh_spoiler(update: Update) -> bool:
     return False
 
 
-def convert_number(match: re.Match, update: Update, calc_fn: Callable[[float], float], unit_name: str):
+def convert_number(match: re.Match, calc_fn: Callable[[float], float], unit_name: str) -> str:
     value = match.group("number")
     if value is None:
-        update.effective_message.reply_text("couldn't find a valid number")
-        return
+        return "couldn't find a valid number"
     value = value.replace(",", ".")
     try:
         freedom = float(value)
         result = calc_fn(freedom)
-        update.effective_message.reply_text(f"{result:.2f}{unit_name}")
+        return f"{result:.2f}{unit_name}"
     except ValueError:
-        update.effective_message.reply_text(f"couldn't parse number (`{value}`) as float")
+        return f"couldn't parse number (`{value}`) as float"
+
+
+def convert_ounces(match: re.Match) -> str:
+    fluid = convert_number(match, lambda n: n * 29.57353, "ml")
+    mass = convert_number(match, lambda n: n * 28.34952, "gram")
+
+    return f"{fluid}\n{mass}"
 
 
 regex_match_number_with_prefix = r"(?P<number>[-+]?\d+(:?(:?,|\.)\d+)?)"
 
-units: dict[str, dict[str, Union[re.Pattern, Callable[[re.Match, Update], None]]]] = {
+units: dict[str, dict[str, Union[re.Pattern, Callable[[re.Match], str]]]] = {
     "fahrenheit": {
-        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*°?F", re.IGNORECASE),
-        "process": lambda m, u: convert_number(m, u, lambda n: (n - 32) * (5 / 9), "°C")
+        "regex": re.compile(
+            rf"{regex_match_number_with_prefix}\s*(?P<unit_name>°?F)", re.IGNORECASE
+        ),
+        "process": lambda m: convert_number(m, lambda n: (n - 32) * (5 / 9), "°C"),
     },
     "inches": {
-        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(:?\"|in(:?ch(:?es)?)?)"),
-        "process": lambda m, u: convert_number(m, u, lambda n: n * 2.54, "cm")
+        "regex": re.compile(
+            rf"{regex_match_number_with_prefix}\s*(?P<unit_name>(:?\"|in(:?ch(:?es)?)?))"
+        ),
+        "process": lambda m: convert_number(m, lambda n: n * 2.54, "cm"),
     },
     "pound": {
-        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(:?pound|lb)(:?s)?"),
-        "process": lambda m, u: convert_number(m, u, lambda n: n * 453.59237, "gram")
-    }
+        "regex": re.compile(
+            rf"{regex_match_number_with_prefix}\s*(?P<unit_name>(:?pound|lb)(:?s)?)"
+        ),
+        "process": lambda m: convert_number(m, lambda n: n * 453.59237, "gram"),
+    },
+    "ounces": {
+        "regex": re.compile(
+            rf"{regex_match_number_with_prefix}\s*(?P<unit_name>(:?fl\.)?oz|ounces)"
+        ),
+        "process": convert_ounces,
+    },
+    "feet": {
+        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>ft|feet)"),
+        "process": lambda m: convert_number(m, lambda n: n * 0.3048, "m"),
+    },
 }
 
 
@@ -69,11 +91,17 @@ def match_unit(unit: dict, args: str) -> re.Match | None:
 
 
 def find_matching_unit(args: str) -> Tuple[re.Match, dict] | None:
+    fmatch, funit = None, None
+    longest_unitname_match = 0
+
     for unit in units.values():
         if match := match_unit(unit, args):
-            return match, unit
+            unitname_length = len(match.group("unit_name"))
+            if unitname_length > longest_unitname_match:
+                longest_unitname_match = unitname_length
+                fmatch, funit = match, unit
 
-    return None
+    return fmatch, funit
 
 
 class Bot:
@@ -120,7 +148,8 @@ class Bot:
             update.effective_message.reply_text("couldn't find a valid unit to convert")
         else:
             match, unit = unit
-            unit["process"](match, update)
+            message = unit["process"](match)
+            update.effective_message.reply_text(message)
 
     @staticmethod
     def supported_units(update: Update, _: CallbackContext):
