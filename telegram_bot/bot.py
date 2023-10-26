@@ -62,3 +62,14 @@ class Bot:
 
     def send_message(self, *, chat_id: str, text: str, **kwargs) -> Message:
         return self.updater.bot.send_message(chat_id=chat_id, text=text, disable_web_page_preview=True, **kwargs)
+
+    def cure(self, update: Update, _: CallbackContext):
+        args = update.effective_message.text.split(" ", maxsplit=1)[1]
+        if match := re.match(r"(?P<number>\d+(:?(:?,|.)\d+))?°?F", args):
+            value = match.group("number").replace(",", ".")
+            try:
+                freedom = float(value)
+                celcius = (freedom - 32) * (5/9)
+                return update.effective_message.reply_text(f"{celcius:.2f}°C")
+            except ValueError:
+                return update.effective_message.reply_text(f"Couldn't parse number (`{value}`) as float")
