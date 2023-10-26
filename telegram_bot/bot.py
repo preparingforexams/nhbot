@@ -65,7 +65,7 @@ class Bot:
 
     @staticmethod
     def cure(update: Update, _: CallbackContext):
-        regex = r"(?P<number>(?:-|\+)?\d+(:?(:?,|.)\d+)?)\s*°?F"
+        regex = r"(?P<number>(?:-|\+)?\d+(:?(:?,|\.)\d+)?)\s*°?F"
 
         args = update.effective_message.text.split(" ", maxsplit=1)[1]
         if match := re.match(regex, args, re.IGNORECASE):
