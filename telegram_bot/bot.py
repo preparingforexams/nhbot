@@ -50,8 +50,12 @@ units: dict[str, dict[str, Union[re.Pattern, Callable[[re.Match, Update], None]]
         "process": lambda m, u: convert_number(m, u, lambda n: (n - 32) * (5 / 9), "°C")
     },
     "inches": {
-        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(\"|in(:?ch(:?es)?)?)"),
+        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(:?\"|in(:?ch(:?es)?)?)\b"),
         "process": lambda m, u: convert_number(m, u, lambda n: n * 2.54, "cm")
+    },
+    "pound": {
+        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(:?pound|lb)(:?s)?\b"),
+        "process": lambda m, u: convert_number(m, u, lambda n: n * 453.59237, "gram")
     }
 }
 
