@@ -112,7 +112,7 @@ units: dict[str, dict[str, Union[re.Pattern, Callable[[re.Match], str]]]] = {
     },
     "cups": {
         "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>cup|endgegner)"),
-        "process": lambda m: convert_cups(m),
+        "process": convert_cups,
     },
     "tablespoon": {
         "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>tablespoon|tbsp)"),
@@ -121,6 +121,10 @@ units: dict[str, dict[str, Union[re.Pattern, Callable[[re.Match], str]]]] = {
     "teaspoon": {
         "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>teaspoon|tsp)"),
         "process": convert_teaspoon,
+    },
+    "mile": {
+        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>mi(?:le)?)"),
+        "process": lambda m: convert_number(m, lambda n: n * 1.609344, "km"),
     },
 }
 
