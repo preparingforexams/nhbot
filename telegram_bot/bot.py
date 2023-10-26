@@ -126,6 +126,10 @@ units: dict[str, dict[str, Union[re.Pattern, Callable[[re.Match], str]]]] = {
         "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>mi(?:le)?)"),
         "process": lambda m: convert_number(m, lambda n: n * 1.609344, "km"),
     },
+    "yard": {
+        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>yd|yard)"),
+        "process": lambda m: convert_number(m, lambda n: n * 0.9144, "m"),
+    },
 }
 
 
