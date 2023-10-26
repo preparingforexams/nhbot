@@ -41,6 +41,24 @@ def convert_number(match: re.Match, calc_fn: Callable[[float], float], unit_name
         return f"couldn't parse number (`{value}`) as float"
 
 
+def convert_cups(match: re.Match) -> str:
+    cups = [convert_number(match, lambda n: n * 227, " gram (butter)"),
+            convert_number(match, lambda n: n * 125, " gram (all purpose flour)"),
+            convert_number(match, lambda n: n * 136, " gram (bread flour)"),
+            convert_number(match, lambda n: n * 85, " gram (cocoa powder)"),
+            convert_number(match, lambda n: n * 120, " gram (powdered sugar)"),
+            convert_number(match, lambda n: n * 95, " gram (rolled oats)"),
+            convert_number(match, lambda n: n * 200, " gram (granulated sugar)"),
+            convert_number(match, lambda n: n * 220, " gram (packed brown sugar)"),
+            convert_number(match, lambda n: n * 185, " gram (uncooked long grain rice)"),
+            convert_number(match, lambda n: n * 200, " gram (uncooked short grain rice)"),
+            convert_number(match, lambda n: n * 340, " gram (honey, molasse, syrup)"),
+            convert_number(match, lambda n: n * 237, " gram (water)"),
+            convert_number(match, lambda n: n * 249, " gram (whole milk)")]
+
+    return "\n".join(cups)
+
+
 def convert_ounces(match: re.Match) -> str:
     fluid = convert_number(match, lambda n: n * 29.57353, "ml")
     mass = convert_number(match, lambda n: n * 28.34952, "gram")
@@ -79,6 +97,10 @@ units: dict[str, dict[str, Union[re.Pattern, Callable[[re.Match], str]]]] = {
         "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>ft|feet)"),
         "process": lambda m: convert_number(m, lambda n: n * 0.3048, "m"),
     },
+    "cups": {
+        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(?P<unit_name>cup)"),
+        "process": lambda m: convert_cups(m),
+    }
 }
 
 
