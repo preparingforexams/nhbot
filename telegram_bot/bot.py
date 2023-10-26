@@ -65,7 +65,7 @@ class Bot:
 
     def cure(self, update: Update, _: CallbackContext):
         args = update.effective_message.text.split(" ", maxsplit=1)[1]
-        if match := re.match(r"(?P<number>\d+(:?(:?,|.)\d+))?\s+?°?F", args):
+        if match := re.match(r"(?P<number>-?\d+(:?(:?,|.)\d+))?\s+?°?F", args):
             value = match.group("number").replace(",", ".")
             try:
                 freedom = float(value)
