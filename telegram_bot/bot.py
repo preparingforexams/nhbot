@@ -63,8 +63,9 @@ class Bot:
     def send_message(self, *, chat_id: str, text: str, **kwargs) -> Message:
         return self.updater.bot.send_message(chat_id=chat_id, text=text, disable_web_page_preview=True, **kwargs)
 
-    def cure(self, update: Update, _: CallbackContext):
-        regex = r"(?P<number>-?\d+(:?(:?,|.)\d+)?)\s*°?F"
+    @staticmethod
+    def cure(update: Update, _: CallbackContext):
+        regex = r"(?P<number>(?:-|\+)?\d+(:?(:?,|.)\d+)?)\s*°?F"
 
         args = update.effective_message.text.split(" ", maxsplit=1)[1]
         if match := re.match(regex, args, re.IGNORECASE):
@@ -75,9 +76,10 @@ class Bot:
             value = value.replace(",", ".")
             try:
                 freedom = float(value)
-                celcius = (freedom - 32) * (5/9)
+                celcius = (freedom - 32) * (5 / 9)
                 return update.effective_message.reply_text(f"{celcius:.2f}°C")
             except ValueError:
                 return update.effective_message.reply_text(f"couldn't parse number (`{value}`) as float")
         else:
-            return update.effective_message.reply_text(f"couldn't find a valid match for `{regex}`")
+            return update.effective_message.reply_text(f"couldn't find a valid match for ```{regex}```",
+                                                       parse_mode=ParseMode.MARKDOWN_V2)
