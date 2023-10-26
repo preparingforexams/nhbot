@@ -20,6 +20,7 @@ def start(bot_token: str):
     dispatcher.add_handler(CommandHandler("nh", bot.nh))
     dispatcher.add_handler(CommandHandler("cure_freedom", bot.cure))
     dispatcher.add_handler(CommandHandler("cf", bot.cure))
+    dispatcher.add_handler(CommandHandler("supported_units", bot.supported_units))
     dispatcher.add_handler(
         MessageHandler(Filters.text | Filters.video | Filters.audio | Filters.photo, bot.handle_message))
 

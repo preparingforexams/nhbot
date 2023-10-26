@@ -121,3 +121,7 @@ class Bot:
         else:
             match, unit = unit
             unit["process"](match, update)
+
+    @staticmethod
+    def supported_units(update: Update, _: CallbackContext):
+        return update.effective_message.reply_text("\n".join(str(key) for key in units.keys()))
