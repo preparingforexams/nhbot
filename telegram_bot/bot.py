@@ -1,4 +1,5 @@
 import re
+from typing import Tuple, Union, Callable
 
 from bs4 import BeautifulSoup
 from telegram import ParseMode, Update, Message
@@ -25,6 +26,50 @@ def is_nh_spoiler(update: Update) -> bool:
                 return True
 
     return False
+
+
+def convert_number(match: re.Match, update: Update, calc_fn: Callable[[float], float], unit_name: str):
+    value = match.group("number")
+    if value is None:
+        update.effective_message.reply_text("couldn't find a valid number")
+        return
+    value = value.replace(",", ".")
+    try:
+        freedom = float(value)
+        result = calc_fn(freedom)
+        update.effective_message.reply_text(f"{result:.2f}{unit_name}")
+    except ValueError:
+        update.effective_message.reply_text(f"couldn't parse number (`{value}`) as float")
+
+
+regex_match_number_with_prefix = r"(?P<number>[-+]?\d+(:?(:?,|\.)\d+)?)"
+
+units: dict[str, dict[str, Union[re.Pattern, Callable[[re.Match, Update], None]]]] = {
+    "fahrenheit": {
+        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*°?F", re.IGNORECASE),
+        "process": lambda m, u: convert_number(m, u, lambda n: (n - 32) * (5 / 9), "°C")
+    },
+    "inches": {
+        "regex": re.compile(rf"{regex_match_number_with_prefix}\s*(\"|in(:?ch(:?es)?)?)"),
+        "process": lambda m, u: convert_number(m, u, lambda n: n * 2.54, "cm")
+    }
+}
+
+
+def match_unit(unit: dict, args: str) -> re.Match | None:
+    regex: re.Pattern = unit["regex"]
+    if match := regex.match(args):
+        return match
+
+    return None
+
+
+def find_matching_unit(args: str) -> Tuple[re.Match, dict] | None:
+    for unit in units.values():
+        if match := match_unit(unit, args):
+            return match, unit
+
+    return None
 
 
 class Bot:
@@ -65,21 +110,10 @@ class Bot:
 
     @staticmethod
     def cure(update: Update, _: CallbackContext):
-        regex = r"(?P<number>(?:-|\+)?\d+(:?(:?,|\.)\d+)?)\s*°?F"
-
         args = update.effective_message.text.split(" ", maxsplit=1)[1]
-        if match := re.match(regex, args, re.IGNORECASE):
-            value = match.group("number")
-            if value is None:
-                print("couldn't find a valid number")
-                return
-            value = value.replace(",", ".")
-            try:
-                freedom = float(value)
-                celcius = (freedom - 32) * (5 / 9)
-                return update.effective_message.reply_text(f"{celcius:.2f}°C")
-            except ValueError:
-                return update.effective_message.reply_text(f"couldn't parse number (`{value}`) as float")
+        unit = find_matching_unit(args)
+        if unit is None:
+            update.effective_message.reply_text("couldn't find a valid unit to convert")
         else:
-            return update.effective_message.reply_text(f"couldn't find a valid match for ```{regex}```",
-                                                       parse_mode=ParseMode.MARKDOWN_V2)
+            match, unit = unit
+            unit["process"](match, update)
