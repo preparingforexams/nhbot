@@ -3,9 +3,10 @@ namespace: telegram-bots
 deployment:
   name: nhbot
   image: ghcr.io/preparingforexams/nhbot:__TAG__
-  imagePullPolicy: Always
+  imagePullPolicy: IfNotPresent
   revisionHistoryLimit: 1
   replicas: 1
+  updateStrategy: Recreate
   labels:
     app: nhbot
   requests:
